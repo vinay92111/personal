@@ -1,0 +1,39 @@
+# This file is for running ansible script outside the terraform code and reme to ssh-add command to add key
+provider "aws" {
+  region     = "us-east-2"
+  access_key = "AK##################"
+  secret_key = "9sbA24JRaU###########################"
+}
+
+
+resource "aws_key_pair" "newkey" {
+  key_name   = "newkey"
+  public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDCb5AZTlbQDwlyzfNOytqxIonAsra+zy5fdHKoMjAjApSzNvLB6tO0/yiMWnYCvfAy5JlrfS+mS2/54jGry4Dcap0Fa0sJrAtDVlUMaMuQ8SNBspiG3qA7kTHq0YzZwydiy9dmqUxTb5cinRbMV6LGR2guLBPnh2wi+mIQZBRLOP2BLqogm6Z1ociyy+GDXiFSrqOdS4CtWP6GvaaWEsmHlDRBL9uks9ENULjvNjNJudBKZh6YUHFi50hA8YearEo1B0e4IWlR3SXZ0Do7tAtJw6VKSD8fWmlpW5jeA2UUM3wPfbMmAIp4bEeI+xnDSWFkRkp7qVQbhV/Rm/00vp8WFpEoLQf3GxwDX4b0vD+M+QKToIWefBGabKe89DaULz1RRJxGemwd/AQtR0uyMICzLnNlxfypZBewRAm9MWWsgvEOZkyRE7r6Pc/S06JRlXL+gkp/8AUctoAM33c9pf2ym5z5wmfQDsg2IooGnTgmlmh/YdHowSc8l3Umo9zD9u8= root@ip-172-31-32-159"
+
+}
+
+resource "aws_instance" "myinst" {
+  ami           = "ami-00399ec92321828f5" # us-east-2
+  instance_type = "t2.micro"
+  key_name      = "newkey"
+  tags = {
+    Name = "ansible-Instance"
+      }
+provisioner "remote-exec" {
+inline =  [
+     "echo 'build ssh connection'"
+]
+connection {
+   host = self.public_ip
+   type = "ssh"
+   user = "ubuntu"
+   private_key = file("./newkey")
+}
+}
+
+provisioner "local-exec" {
+    command = "echo  ${aws_instance.myinst.public_ip} >> /etc/ansible/hosts"
+}
+}
+
+
